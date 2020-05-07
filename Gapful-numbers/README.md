@@ -1,4 +1,6 @@
-# Grapeful numbers - In JavaScript
+# Grapeful numbers
+
+Currently in JavaScript and Lua.
 
 Task from [Rosetta code](https://rosettacode.org/wiki/Gapful_numbers), though not committed yet.  
 Generate and show all sets of numbers on one horizontal line with a title:
