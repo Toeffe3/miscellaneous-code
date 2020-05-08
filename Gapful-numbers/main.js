@@ -1,6 +1,6 @@
 const gapful = (a) => !(a%((a+'')[0]+a%10));
 
-// return an array with the m first gapful numbers greater than n
+// return an array with the m first gapful numbers greater than or equal n
 const seq = (m, n, arr = []) => {
     do if(gapful(n)) arr.push(n)
     while(arr.length < m && n++)
