@@ -1,9 +1,11 @@
 # Prime number
-A one line prime number checker in JavaScript.
+Prime number checker currently in Javascript and Lua
 
 **Benchmark:**  
-Calculation all prime numbers less than 50000:  
-3.346s  
+If P is a list of all prime numbers and x is the index:
 
-Calculation the first 50000 prime numbers:  
-6m 38.974s  
+TEST             | JavaScript | Lua        
+:---------------:|-----------:|-----------:
+P(x) == 167325601|      1.345s|      7.215s
+P(x) < 50000     |      2.882s|     36.803s
+P(x), x < 10000  |     10.850s|    168.490s
