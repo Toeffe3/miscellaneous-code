@@ -1,3 +1,6 @@
+
+const sqrt = (a => {return Math.sqrt(a)});
+
 class Geometry {
 
   dist(x,y) {
@@ -13,15 +16,19 @@ class Geometry {
 
     if(this.constructor == shape.constructor) {
       if(this instanceof Circle) {  // Circle - Circle
-        let x = [this.x, shape.x],
-            y = [this.y, shape.y],
-            r = this.dist(shape.x,shape.y),
-            a = Math.abs(this.r**2 - shape.r**2) / 2 * r**2,
-            c = Math.sqrt(2 * (this.r**2 + shape.r**2) / r**2 - ((this.r**2 - shape.r**2) ** 2) / r**4 - 1),
-            f = [(x[0]+x[1]) / 2 + a * (x[1] - x[0]), (y[0]+y[1]) / 2 + a * (y[1] - y[0])],
-            g = [c * (y[1] - y[0]) / 2, c * (x[0] - x[1]) / 2],
-            i = [f[0] + g[0], f[0] - g[0], f[1] + g[1], f[1] - g[1]];
-        return [new Point(i[0],i[2]), new Point(i[1],i[3])];
+
+        let l = Math.hypot(shape.x-this.x, shape.y-this.y);
+        if (l > (this.r+shape.r)) return [];
+        if (l < Math.abs(this.r-shape.r)) return [];
+        if (l == 0 && this.r == shape.r) return [Infinity];
+
+        let a = ((this.r**2) - (shape.r**2) + (l**2)) / (2*l**2),
+            [p, h] = [[a*(this.x+shape.x), a*(this.y+shape.y)], Math.sqrt((this.r**2)-(a*l)**2)/l],
+            r = [(shape.y-this.y)*h, -(shape.x-this.x)*h];
+
+        return [new Point(p[0]+r[0], p[1]+r[1]), new Point(p[0]-r[0], p[1]-r[1])];
+
+
       } else if(this instanceof Line) { // Line - Line
         return 0;
       }
@@ -63,8 +70,8 @@ class Circle extends Geometry {
     this.b = b;
   }
 
-  draw() {
-    ctx.strokeStyle="#ff0000";
+  draw(strokeStyle="#ff0000") {
+    ctx.strokeStyle=strokeStyle;
     ctx.lineWidth=this.b+"";
     ctx.beginPath();
     ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);
