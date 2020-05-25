@@ -1,12 +1,21 @@
 class Geometry {
 
   dist(x,y) {
+    if(x instanceof Geometry) {y = x.y; x = x.x};
     return Math.sqrt((this.x-x)**2+(this.y-y)**2);
   }
 
   move(x,y) {
     this.x = x;
     this.y = y;
+  }
+
+  associative3() {
+    return [
+      new Point(this.x, this.y),
+      new Point(this.x, this.y),
+      new Point(this.x, this.y)
+    ];
   }
 
   intersect(shape) {
@@ -58,6 +67,7 @@ class Circle extends Geometry {
 
   constructor(x,y,r,b=1) {
     super();
+    
     this.x = x;
     this.y = y;
     this.r = r;
@@ -71,6 +81,20 @@ class Circle extends Geometry {
     ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);
     ctx.stroke();
     ctx.closePath();
+  }
+
+  associative3() {
+    return [
+      new Point(this.r*Math.cos(Math.PI*2)+this.x, this.r*Math.sin(Math.PI*2)+this.y),
+      new Point(this.r*Math.cos(Math.PI*2*1/3)+this.x, this.r*Math.sin(Math.PI*2*1/3)+this.y),
+      new Point(this.r*Math.cos(Math.PI*2*2/3)+this.x, this.r*Math.sin(Math.PI*2*2/3)+this.y),
+    ];
+  }
+
+  pivot(point, v) {
+    let vec = SimVec.rotate(new SimVec(point.x, point.y, this.x, this.y), v);
+    this.x = vec.x;
+    this.y = vec.y;
   }
 
   resize(r, b) {
@@ -92,6 +116,16 @@ class Circle extends Geometry {
 
       case BORDER: return 0;
     }
+  }
+
+  inverse(shape) {
+    let rtn = [];
+    for (var p of shape.associative3()) {
+      let p2 = new Point(this.x, this.y);
+      p2.moveParallel(p,  (this.r**2 / (this.dist(shape) - this.r)))
+      rtn.push(p2);
+    }
+    return rtn;
   }
 }
 
@@ -120,6 +154,14 @@ class Line extends Geometry {
     ctx.closePath();
   }
 
+  associative3() {
+    return [
+      new Point(this.ax, this.ay),
+      new Point(this.x, this.y),
+      new Point(this.bx, this.by)
+    ];
+  }
+
   rotate(a) {
     this.a = a;
   }
@@ -128,8 +170,8 @@ class Line extends Geometry {
     super.move(x,y);
     this.ax = -this.l*Math.cos(this.a)+this.x;
     this.ay = -this.l*Math.sin(this.a)+this.y;
-    this.bx = this.l*Math.cos(this.a)+this.x;
-    this.by = this.l*Math.sin(this.a)+this.y;
+    this.bx =  this.l*Math.cos(this.a)+this.x;
+    this.by =  this.l*Math.sin(this.a)+this.y;
   }
 
   collide(x,y,mode=ENTIRE,b=0) {
@@ -148,6 +190,11 @@ class Point extends Geometry {
     this.x = x;
     this.y = y;
     this.b = b;
+  }
+
+  moveParallel(point, distance) {
+    let deg = Math.atan2(point.x - this.x, point.y - this.y);
+    this.move(distance*Math.sin(deg) + this.x, distance*Math.cos(deg) + this.y);
   }
 
   draw() {
