@@ -12,11 +12,10 @@ canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 const ctx = canvas.getContext("2d");
 
-
 // Actual code
 let cir1 = new Circle(100,100,50,3);
 let cir2 = new Circle(200,150,50,3);
-let line = new Line(400,400,0,5);
+let line = new Line(400,400,0,0,5);
 let inv, cir3;
 
 loop((data) => {
@@ -48,9 +47,7 @@ loop((data) => {
   });
 
   inv = cir2.inverse(cir1);
-  inv.forEach(i => {
-    i.draw()
-  });
+  inv.draw();
 
   cir1.associative3().forEach(i => {
     i.draw()

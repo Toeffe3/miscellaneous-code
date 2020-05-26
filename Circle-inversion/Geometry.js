@@ -10,6 +10,26 @@ class Geometry {
     this.y = y;
   }
 
+  rotate(deg) {
+    this.deg = deg;
+  }
+
+  pivot(point, v) {
+    let vec = SimVec.rotate(new SimVec(point.x, point.y, this.x, this.y), v);
+    this.x = vec.x;
+    this.y = vec.y;
+  }
+
+  resize(r, b) {
+    this.r = r;
+    this.b = b||this.b;
+  }
+
+  moveParallel(point, distance) {
+    let deg = Math.atan2(point.x - this.x, point.y - this.y);
+    this.move(distance*Math.sin(deg) + this.x, distance*Math.cos(deg) + this.y);
+  }
+
   associative3() {
     return [
       new Point(this.x, this.y),
@@ -19,25 +39,114 @@ class Geometry {
   }
 
   intersect(shape) {
+    return new Point(null, null, 3)
+  }
+}
 
-    if(this.constructor == shape.constructor) {
-      if(this instanceof Circle) {  // Circle - Circle
-        let d = [shape.x-this.x, shape.y-this.y], l = Math.hypot(...d);
-        if (l > (this.r+shape.r)) return [];
-        if (l < Math.abs(this.r-shape.r)) return [];
-        else if (l == 0) return [Infinity];
+class Circle extends Geometry {
 
-        let a = ((this.r**2)-(shape.r**2)+(l**2))/(2*l**2),
-            [p, h] = [[this.x+(a)*(shape.x-this.x), this.y+(a)*(shape.y-this.y)], Math.sqrt((this.r**2)-(a*l)**2)/l];
+  constructor(x,y,r,b=1) {
+    super();
+    this.x = x;
+    this.y = y;
+    this.r = r;
+    this.b = b;
+    this.deg = 0;
+  }
 
-        return [new Point(p[0]-d[1]*h, p[1]+d[0]*h), new Point(p[0]+d[1]*h, p[1]-d[0]*h)];
+  draw(strokeStyle="#ff0000") {
+    ctx.strokeStyle=strokeStyle;
+    ctx.lineWidth=this.b+"";
+    ctx.beginPath();
+    ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.closePath();
+  }
 
-      } else if(this instanceof Line) { // Line - Line
-        return 0;
-      }
-    } else if (this instanceof Line && shape instanceof Circle) {
-      let d = new SimVec(this.bx, this.by, this.ax, this.ay),
-          f = new SimVec(shape.x, shape.y, this.ax, this.ay),
+  associative3() {
+    return [
+      new Point(this.r*Math.cos(Math.PI*2)+this.x, this.r*Math.sin(Math.PI*2)+this.y),
+      new Point(this.r*Math.cos(Math.PI*2*1/3)+this.x, this.r*Math.sin(Math.PI*2*1/3)+this.y),
+      new Point(this.r*Math.cos(Math.PI*2*2/3)+this.x, this.r*Math.sin(Math.PI*2*2/3)+this.y),
+    ];
+  }
+
+  intersect(shape) {
+    if(shape instanceof Circle) { // Circle - Circle
+      let d = [shape.x-this.x, shape.y-this.y], l = Math.hypot(...d);
+      if (l > (this.r+shape.r)) return [];
+      if (l < Math.abs(this.r-shape.r)) return [];
+      else if (l == 0) return [Infinity];
+
+      let a = ((this.r**2)-(shape.r**2)+(l**2))/(2*l**2),
+        [p, h] = [[this.x+(a)*(shape.x-this.x), this.y+(a)*(shape.y-this.y)], Math.sqrt((this.r**2)-(a*l)**2)/l];
+
+      return [new Point(p[0]-d[1]*h, p[1]+d[0]*h), new Point(p[0]+d[1]*h, p[1]-d[0]*h)];
+    }
+  }
+
+  collide(x,y, mode=ENTIRE) {
+    switch (mode) {
+      case ENTIRE: return(x < (this.x + this.r) &&
+                          x > (this.x - this.r) &&
+                          y < (this.y + this.r) &&
+                          y > (this.y - this.r));
+
+      case INFILL: return(x < (this.x + this.r - this.b) &&
+                          x > (this.x - this.r + this.b) &&
+                          y < (this.y + this.r - this.b) &&
+                          y > (this.y - this.r + this.b));
+
+      case BORDER: return 0;
+    }
+  }
+
+  inverse(shape) {
+    let pc = new Point(this.x, this.y);
+    let pe = new Point(this.x-shape.r, this.y-shape.r);
+    pc.moveParallel(shape,  this.r**2 / (this.dist(shape)))
+    let c = new Circle(pc.x, pc.y, this.r**2 / (this.dist(shape)))
+    return c
+  }
+}
+
+class Line extends Geometry {
+
+  constructor(x,y,l,deg=0,b=1) {
+    super();
+    this.deg = deg;
+    this.b = b >= 3 ? b : 3;
+    this.r = 100;
+    this.move(x,y);
+  }
+
+  draw(strokeStyle="#00ff00") {
+    ctx.strokeStyle=strokeStyle;
+    ctx.lineWidth=this.b+"";
+    ctx.beginPath();
+    ctx.moveTo(this.x - this.r*Math.cos(this.deg), this.y - this.r*Math.sin(this.deg));
+    ctx.lineTo(this.x + this.r*Math.cos(this.deg), this.y + this.r*Math.sin(this.deg));
+    ctx.stroke();
+    ctx.closePath();
+    ctx.strokeStyle="#ff0000";
+    ctx.beginPath();
+    ctx.ellipse(this.x,this.y,3,3,0,0,Math.PI*2);
+    ctx.stroke();
+    ctx.closePath();
+  }
+
+  associative3() {
+    return [
+      new Point(this.x - this.r*Math.cos(this.deg), this.y - this.r*Math.sin(this.deg)),
+      new Point(this.x, this.y),
+      new Point(this.x + this.r*Math.cos(this.deg), this.y + this.r*Math.sin(this.deg))
+    ];
+  }
+
+  intersect(shape) {
+    if (shape instanceof Circle) {
+      let d = new SimVec(this.x + this.r*Math.cos(this.deg), this.y + this.r*Math.sin(this.deg), this.x - this.r*Math.cos(this.deg), this.y - this.r*Math.sin(this.deg)),
+          f = new SimVec(shape.x, shape.y, this.x - this.r*Math.cos(this.deg), this.y - this.r*Math.sin(this.deg)),
           a = SimVec.dotP(d,d),
           b = 2 * SimVec.dotP(f, d),
           c = SimVec.dotP(f, f) - shape.r**2,
@@ -61,123 +170,19 @@ class Geometry {
       }
     }
   }
-}
-
-class Circle extends Geometry {
-
-  constructor(x,y,r,b=1) {
-    super();
-    
-    this.x = x;
-    this.y = y;
-    this.r = r;
-    this.b = b;
-  }
-
-  draw(strokeStyle="#ff0000") {
-    ctx.strokeStyle=strokeStyle;
-    ctx.lineWidth=this.b+"";
-    ctx.beginPath();
-    ctx.ellipse(this.x,this.y,this.r,this.r,0,0,Math.PI*2);
-    ctx.stroke();
-    ctx.closePath();
-  }
-
-  associative3() {
-    return [
-      new Point(this.r*Math.cos(Math.PI*2)+this.x, this.r*Math.sin(Math.PI*2)+this.y),
-      new Point(this.r*Math.cos(Math.PI*2*1/3)+this.x, this.r*Math.sin(Math.PI*2*1/3)+this.y),
-      new Point(this.r*Math.cos(Math.PI*2*2/3)+this.x, this.r*Math.sin(Math.PI*2*2/3)+this.y),
-    ];
-  }
-
-  pivot(point, v) {
-    let vec = SimVec.rotate(new SimVec(point.x, point.y, this.x, this.y), v);
-    this.x = vec.x;
-    this.y = vec.y;
-  }
-
-  resize(r, b) {
-    this.r = r;
-    this.b = b||this.b;
-  }
-
-  collide(x,y, mode=ENTIRE) {
-    switch (mode) {
-      case ENTIRE: return(x < (this.x + this.r) &&
-                          x > (this.x - this.r) &&
-                          y < (this.y + this.r) &&
-                          y > (this.y - this.r));
-
-      case INFILL: return(x < (this.x + this.r - this.b) &&
-                          x > (this.x - this.r + this.b) &&
-                          y < (this.y + this.r - this.b) &&
-                          y > (this.y - this.r + this.b));
-
-      case BORDER: return 0;
-    }
-  }
-
-  inverse(shape) {
-    let rtn = [];
-    for (var p of shape.associative3()) {
-      let p2 = new Point(this.x, this.y);
-      p2.moveParallel(p,  (this.r**2 / (this.dist(shape) - this.r)))
-      rtn.push(p2);
-    }
-    return rtn;
-  }
-}
-
-class Line extends Geometry {
-
-  constructor(x,y,a=0,b=1) {
-    super();
-    this.a = a;
-    this.b = b >= 3 ? b : 3;
-    this.l = 100;
-    this.move(x,y);
-  }
-
-  draw(strokeStyle="#00ff00") {
-    ctx.strokeStyle=strokeStyle;
-    ctx.lineWidth=this.b+"";
-    ctx.beginPath();
-    ctx.moveTo(this.ax, this.ay);
-    ctx.lineTo(this.bx,this.by);
-    ctx.stroke();
-    ctx.closePath();
-    ctx.strokeStyle="#ff0000";
-    ctx.beginPath();
-    ctx.ellipse(this.x,this.y,3,3,0,0,Math.PI*2);
-    ctx.stroke();
-    ctx.closePath();
-  }
-
-  associative3() {
-    return [
-      new Point(this.ax, this.ay),
-      new Point(this.x, this.y),
-      new Point(this.bx, this.by)
-    ];
-  }
-
-  rotate(a) {
-    this.a = a;
-  }
 
   move(x,y) {
     super.move(x,y);
-    this.ax = -this.l*Math.cos(this.a)+this.x;
-    this.ay = -this.l*Math.sin(this.a)+this.y;
-    this.bx =  this.l*Math.cos(this.a)+this.x;
-    this.by =  this.l*Math.sin(this.a)+this.y;
+    this.ax = -this.l*Math.cos(this.deg)+this.x;
+    this.ay = -this.l*Math.sin(this.deg)+this.y;
+    this.bx =  this.l*Math.cos(this.deg)+this.x;
+    this.by =  this.l*Math.sin(this.deg)+this.y;
   }
 
   collide(x,y,mode=ENTIRE,b=0) {
     switch (mode) {
       case INFILL: return 0;
-      default: return ((y-this.y-(this.b+b)<Math.tan(this.a)*(x-this.x)&&y-this.y+(this.b+b)>Math.tan(this.a)*(x-this.x)));
+      default: return ((y-this.y-(this.b+b)<Math.tan(this.deg)*(x-this.x)&&y-this.y+(this.b+b)>Math.tan(this.deg)*(x-this.x)));
     }
   }
 
@@ -190,11 +195,7 @@ class Point extends Geometry {
     this.x = x;
     this.y = y;
     this.b = b;
-  }
-
-  moveParallel(point, distance) {
-    let deg = Math.atan2(point.x - this.x, point.y - this.y);
-    this.move(distance*Math.sin(deg) + this.x, distance*Math.cos(deg) + this.y);
+    this.deg = 0;
   }
 
   draw() {
