@@ -40,6 +40,8 @@ var list = uniqe_chars(input);
 while (Object.keys(list).length > 1) pair(list);
 list = list[`#${count()-1}`];
 
+console.log(JSON.stringify(list, null, " "));
+
 var encoded = "";
 input.split('').forEach(c => encoded += encode(list, c));
 console.log({encoded});

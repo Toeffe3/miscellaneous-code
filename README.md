@@ -32,9 +32,9 @@
 | [Huffman encoding](L5)        | `JS`        | 'Smallest possible' lossles encoding for text (Optimization needed)
 | [Latin square](L6)            | `Lua`       | How to arrange a list so that there is only one entry in each row and cloumn
 | [Neat loop in JS](L7)         | `JS`        | RequestFrameAnimation packed into: `loop({ body }, fps);` and `loop.unloop();`
-| [Pascals triangle](L8)        | `JS`, `Lua` | .
-| [Primes](L9)                  | `JS`, `Lua` | .
-| [The 15-puzzle](L10)          | `JS`, `Lua` | .
+| [Pascals triangle](L8)        | `JS`, `Lua` | Pascals trinagle
+| [Primes](L9)                  | `JS`, `Lua` | Prime number finder
+| [The 15-puzzle](L10)          | `JS`, `Lua` | The classic square sliding puzzle
 
 [L1]:  2Dmatrix-code-generator/README.md
 [L2]:  Circle-inversion/README.md
